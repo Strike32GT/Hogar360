@@ -1,40 +1,206 @@
-# Hogar360: Descripción General del Proyecto
+# Hogar360
 
-**Hogar360** es una aplicación móvil multiplataforma diseñada para ser la herramienta definitiva de gestión, remodelación y organización del hogar. Su objetivo es centralizar en una sola "súper-app" todas las necesidades matemáticas y espaciales que surgen al modificar una casa, eliminando la frustración de comprar materiales equivocados o muebles que no caben.
+Hogar360 es una aplicación móvil para apoyar tareas básicas de remodelación del hogar. La primera versión se enfoca en calcular cuántas cajas de mayólicas comprar según las medidas del piso y en preparar una base para una futura paleta de colores de pintura.
 
-Con una interfaz visual amigable basada en la paleta de colores *"Spring Meadow"* (tonos cálidos, limpios y accesibles), la aplicación permite a los usuarios llevar el control técnico de su casa en el bolsillo.
+El proyecto está dividido en dos partes:
 
----
+- `mobile/`: aplicación Flutter para Android.
+- `backend/`: API REST con Node.js, Express, TypeScript y MongoDB Atlas.
 
-## 🛠️ ¿Qué hace la aplicación? (Módulos Principales)
+## Funciones actuales
 
-Toda la aplicación gira en torno a un concepto central: el usuario registra las habitaciones de su casa una sola vez, y a partir de ahí, la app utiliza esas medidas para automatizar cualquier cálculo.
+- Pantalla de bienvenida.
+- Registro e inicio de sesión.
+- Sesión persistente en el dispositivo.
+- Cierre de sesión desde Perfil.
+- Home con saludo personalizado.
+- Calculadora de cerámicos/mayólicas.
+- Guardado de resultados en historial por usuario.
+- Perfil con resumen de cálculos guardados.
+- Edición del nombre del usuario.
+- Sección de pintura marcada como "Próximamente".
 
-### 1. Mis Espacios (El Registro Base)
+## Modelo de cálculo
 
-Es el corazón de la app. El usuario crea su "Sala", "Cocina" o "Dormitorio" ingresando las medidas reales (largo, ancho y alto). Además, la app le permite registrar "huecos" como puertas y ventanas para que los cálculos futuros sean exactos.
+La calculadora usa el mismo modelo en frontend y backend:
 
-### 2. Calculadora de Remodelación (Acabados)
+```text
+areaPiso = largoPiso * anchoPiso
+areaPieza = (largoCeramicoCm / 100) * (anchoCeramicoCm / 100)
+piezasBase = ceil(areaPiso / areaPieza)
+piezasMerma = ceil(piezasBase * merma / 100)
+piezasTotales = piezasBase + piezasMerma
+cajas = ceil(piezasTotales / piezasPorCaja)
+```
 
-Una vez que el espacio está registrado, la app resuelve las dudas de construcción al instante mediante fórmulas matemáticas automatizadas:
+Ejemplo:
 
-* **Pisos y Cerámicos:** Seleccionas el tamaño de la mayólica (ej. 60x60 cm) y la app calcula el área del piso, añade automáticamente un porcentaje de merma (para recortes o roturas) y te dice exactamente cuántas cajas necesitas comprar.
-* **Pintura:** La app calcula los metros cuadrados de las paredes (restando automáticamente el espacio de las puertas y ventanas) y te indica cuántos galones de pintura necesitas según las capas que desees darle.
+```text
+Piso: 4 m x 4 m = 16 m2
+Pieza: 20 cm x 20 cm = 0.04 m2
+Piezas base: 400
+Merma 10%: 40
+Piezas totales: 440
+Cajas de 10 piezas: 44 cajas
+```
 
-### 3. Validador de Espacios y Muebles (Organización)
+## Stack utilizado
 
-Resuelve el problema de saber si un electrodoméstico o mueble nuevo va a entrar en la casa. El usuario ingresa las medidas del mueble que vio en la tienda, y la app cruza esos datos con las dimensiones de la habitación. Mediante un plano 2D interactivo, muestra visualmente si el mueble cabe, si bloquea el paso o si tapa algún elemento clave.
+| Parte | Tecnología | Uso |
+|---|---|---|
+| Mobile | Flutter / Dart | Aplicación Android multiplataforma. |
+| Estado UI | `ChangeNotifier` / ViewModels | Manejo de estado por módulo. |
+| HTTP mobile | `http` | Consumo de la API REST. |
+| Sesión local | `shared_preferences` | Persistencia de token, nombre y correo. |
+| Backend | Node.js + Express | API REST. |
+| Backend lenguaje | TypeScript | Tipado y compilación segura. |
+| Base de datos | MongoDB Atlas | Usuarios, sesiones e historial de cálculos. |
+| Contenedores | Docker Alpine | Ejecución portable del backend. |
+| Deploy backend | Render Web Service | Despliegue de la API. |
 
-### 4. La FerreLista (Presupuesto y Compras)
+## Arquitectura general
 
-Cada cálculo de material que el usuario aprueba se convierte en una lista de compras inteligente. La app no solo anota la cantidad de mayólicas o pintura, sino que te sugiere los materiales secundarios (pegamento, fragua, rodillos, cinta de pintor). Esta lista se puede exportar en PDF o enviar por WhatsApp directamente al vendedor de la ferretería.
+```mermaid
+graph TD
+    A[Usuario] --> B[App Flutter]
+    B --> C[API REST Express]
+    C --> D[(MongoDB Atlas)]
+```
 
----
+## Estructura
 
-## 💻 Stack Tecnológico Integrado
+```text
+Hogar360/
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── middlewares/
+│   │   ├── modules/
+│   │   │   ├── auth/
+│   │   │   ├── paint/
+│   │   │   └── tiles/
+│   │   ├── routes/
+│   │   └── server.ts
+│   ├── Dockerfile
+│   └── package.json
+├── mobile/
+│   ├── lib/
+│   │   ├── app/
+│   │   ├── core/
+│   │   └── modules/
+│   ├── android/
+│   └── pubspec.yaml
+├── render.yaml
+└── README.md
+```
 
-Para lograr esta experiencia fluida y rápida, **Hogar360** utiliza una arquitectura moderna:
+## Backend
 
-* **Frontend (Móvil):** Desarrollado en **Flutter** para garantizar una experiencia rápida, interactiva (con visualizaciones 2D de los espacios) y disponible tanto para iOS como para Android.
-* **Backend (API REST):** Un motor lógico que recibe las dimensiones, procesa las fórmulas de construcción y devuelve los resultados exactos para no sobrecargar el teléfono del usuario.
-* **Base de Datos (MongoDB):** Utiliza una estructura **NoSQL** flexible. Esto es clave porque permite guardar la casa entera de un usuario (con todas sus habitaciones, muebles de distintos tamaños y proyectos de pintura) en un solo documento JSON dinámico, haciendo que la app cargue la información de manera inmediata.
+Variables requeridas en `backend/.env`:
+
+```env
+PORT=3000
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/?retryWrites=true&w=majority&appName=Hogar360
+MONGODB_DB_NAME=hogar360
+```
+
+Comandos:
+
+```powershell
+cd backend
+npm install
+npm run dev
+npm run check
+npm run build
+npm start
+```
+
+Stress test local:
+
+```powershell
+cd backend
+$env:API_BASE_URL='http://127.0.0.1:3000'
+$env:STRESS_TOTAL='1000'
+$env:STRESS_CONCURRENCY='50'
+npm run stress
+```
+
+## Mobile
+
+Comandos principales:
+
+```powershell
+cd mobile
+flutter pub get
+flutter analyze
+flutter test
+flutter run
+```
+
+Para compilar apuntando al backend local en emulador Android:
+
+```powershell
+flutter build apk --release --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
+```
+
+Para compilar apuntando a Render:
+
+```powershell
+flutter build apk --release --dart-define=API_BASE_URL=https://TU-BACKEND.onrender.com/api
+flutter build appbundle --release --dart-define=API_BASE_URL=https://TU-BACKEND.onrender.com/api
+```
+
+## Deploy en Render
+
+El backend debe crearse como **Web Service**.
+
+Configuración recomendada:
+
+```text
+Root Directory: backend
+Build Command: npm ci && npm run build
+Start Command: npm start
+Health Check Path: /health
+```
+
+Variables en Render:
+
+```text
+NODE_ENV=production
+MONGODB_URI=<conexion de MongoDB Atlas>
+MONGODB_DB_NAME=hogar360
+```
+
+También existe `render.yaml` para usar Render Blueprints.
+
+## Publicación Android
+
+Antes de subir a Uptodown o Aptoide:
+
+- Cambiar `API_BASE_URL` al dominio real de Render.
+- Crear una firma release real con keystore.
+- Crear `mobile/android/key.properties` usando `mobile/android/key.properties.example`.
+- Generar APK o AAB release.
+
+Artefactos:
+
+```text
+mobile/build/app/outputs/flutter-apk/app-release.apk
+mobile/build/app/outputs/bundle/release/app-release.aab
+```
+
+## Validaciones usadas
+
+```powershell
+cd mobile
+flutter analyze
+flutter test
+flutter build apk --release
+flutter build appbundle --release
+
+cd ../backend
+npm run check
+npm run build
+npm run stress
+```
