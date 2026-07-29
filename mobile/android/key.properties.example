@@ -1,4 +1,5 @@
 storePassword=change-me
 keyPassword=change-me
 keyAlias=upload
-storeFile=app/upload-keystore.jks
+storeFile=../app/upload-keystore.p12
+storeType=pkcs12
